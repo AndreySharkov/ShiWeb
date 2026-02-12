@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WebServer.Server": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\Users\\lyubo\\Desktop\\LUYBCHO\\ИТ\\C#\\Porjects\\BasicWebServer"
+    }
+  }
+}
