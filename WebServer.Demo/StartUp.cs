@@ -2,7 +2,6 @@
 using WebServer.Server;
 using WebServer.Server.HTTP_Request;
 using WebServer.Server.Responses;
-using WebServer.Server.Views;
 
 namespace WebServer.demo
 {
@@ -16,7 +15,7 @@ namespace WebServer.demo
                 .MapGet("/", new TextResponse("Hello from the server!"))
                 .MapGet("/HTML", new HtmlResponse("<h1>HTML response</h1>"))
                 .MapGet("/Redirect", new RedirectResponse("https://softuni.org/"))
-                .MapGet("/login", new HtmlResponse(Form.HTML))
+                .MapGet("/login", new HtmlResponse(WebServer.Server.Form.HTML))
                 .MapPost("/login", new TextResponse("", AddFormDataAction));
                 
             });
