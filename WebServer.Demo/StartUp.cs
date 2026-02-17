@@ -1,14 +1,37 @@
+﻿using System.Runtime.CompilerServices;
 using WebServer.Server;
+using WebServer.Server.HTTP_Request;
+using WebServer.Server.Responses;
+using WebServer.Server.Views;
 
 namespace WebServer.demo
 {
-    internal class StartUp
+    public class StartUp
     {
-        static void Main(string[] args)
+        public static void Main()
         {
-            var server = new HttpServer("127.0.0.1", 8080, routes => { });
+            var server = new HttpServer(routes =>
+            {
+                routes
+                .MapGet("/", new TextResponse("Hello from the server!"))
+                .MapGet("/HTML", new HtmlResponse("<h1>HTML response</h1>"))
+                .MapGet("/Redirect", new RedirectResponse("https://softuni.org/"))
+                .MapGet("/login", new HtmlResponse(Form.HTML))
+                .MapPost("/login", new TextResponse("", AddFormDataAction));
+                
+            });
             server.Start();
-            
+        }
+        private static void AddFormDataAction(
+            Request request, Response response)
+        {
+            response.Body = "";
+
+            foreach(var (key, value) in request.FromData)
+            {
+                response.Body += $"{key} - {value}";
+                response.Body += Environment.NewLine;
+            }
         }
     }
 }

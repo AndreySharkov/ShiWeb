@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
-using WebServer.Server.Common;
+﻿using WebServer.Server.Common;
 using WebServer.Server.Contracts;
 using WebServer.Server.HTTP_Request;
 using WebServer.Server.Responses;
@@ -57,7 +53,7 @@ namespace WebServer.Server.HTTP
         {
             Guard.AgainstNull(url, nameof(url));
             Guard.AgainstNull(response, nameof(response));
-            this.routes[Method.Post][url] = response;
+            this.routes[Method.Get][url] = response;
 
             return this;
         }

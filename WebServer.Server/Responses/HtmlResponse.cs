@@ -1,14 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using WebServer.Server.HTTP;
+﻿using WebServer.Server.HTTP;
+using WebServer.Server.HTTP_Request;
 
 namespace WebServer.Server.Responses
 {
     public class HtmlResponse : ContentResponse
     {
-        public HtmlResponse(string HTML)
-            : base(HTML, ContentType.Html)
+        public HtmlResponse(string html, 
+            Action<Request, Response> preRenderAction = null)
+            : base(html, ContentType.Html, preRenderAction)
         {
         }
     }

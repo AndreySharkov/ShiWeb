@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections;
 
 namespace WebServer.Server.HTTP_Request
 {
@@ -13,11 +10,30 @@ namespace WebServer.Server.HTTP_Request
             headers = new Dictionary<string, Header>();
         }
 
+        public string this[string name]
+        {
+            get
+            {
+                return headers[name].Value;
+            }
+            set
+            {
+                headers[name].Value = value;
+            }
+        }
+
         public int Count => this.headers.Count;
+
+        public bool Contains(string name)
+        {
+            return this.headers.ContainsKey(name);
+        }
+
         public void Add(string name, string value)
         {
+
             var headers = new Header(name, value);
-            this.headers.Add(name, headers);
+            this.headers[name] = headers;
         }
 
         public IEnumerator<Header> GetEnumerator()
