@@ -1,4 +1,4 @@
-﻿using WebServer.Server;
+using WebServer.Server;
 
 namespace WebServer.demo
 {
@@ -6,7 +6,7 @@ namespace WebServer.demo
     {
         static void Main(string[] args)
         {
-            var server = new HttpServer("127.0.0.1", 8080);
+            var server = new HttpServer("127.0.0.1", 8080, routes => { });
             server.Start();
             
         }
