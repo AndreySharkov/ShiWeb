@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System.Data;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 using WebServer.Server.Contracts;
 using WebServer.Server.HTTP;
 using WebServer.Server.HTTP_Request;
@@ -35,7 +37,7 @@ namespace WebServer.Server
         {
         }
 
-        public void Start()
+        public async Task Start()
         {
             this.serverListener.Start();
 
@@ -43,34 +45,58 @@ namespace WebServer.Server
             Console.WriteLine("Listening for requests ... ");
             while (true)
             {
-                var connection = serverListener.AcceptTcpClient();
-                var networkStream = connection.GetStream();
-                var requestText = this.ReadRequest(networkStream);
-                Console.WriteLine(requestText);
-                var request = Request.Parse(requestText);
-                var response = routingTable.MatchRequest(request);
-                if (response.PreRenderAction != null)
+                var connection = await serverListener.AcceptTcpClientAsync();
+
+                _ = Task.Run(async () =>
                 {
-                    response.PreRenderAction(request, response);
-                }
-                WriteResponse(networkStream, response);
-                connection.Close();
+                    var networkStream = connection.GetStream();
+                    var requestText = await ReadRequest(networkStream);
+                    Console.WriteLine(requestText);
+                    var request = Request.Parse(requestText);
+                    var response = routingTable.MatchRequest(request);
+                    if (response.PreRenderAction != null)
+                    {
+                        response.PreRenderAction(request, response);
+                    }
+                    AddSession(request, response);
+                    await WriteResponse(networkStream, response);
+                    connection.Close();
+                });
+                
             }
         }
-        private void WriteResponse(NetworkStream networkStream, Response response)
+
+        private static void AddSession(Request request, Response response)
         {
-            var responseBytes = Encoding.UTF8.GetBytes(response.ToString());
-            networkStream.Write(responseBytes);
+            var sessionExists = request.Session
+                .ContainsKey(Session.SessionCurrentDateKey);
+            if (!sessionExists)
+            {
+                request.Session[Session.SessionCurrentDateKey] = DateTime.Now.ToString();
+                response.Cookies.Add(Session.SessionCookieName, request.Session.Id);
+            }
         }
 
-        private string ReadRequest(NetworkStream networkStream)
+        private async Task WriteResponse(NetworkStream networkStream, Response response)
+        {
+            var responseBytes = Encoding.UTF8.GetBytes(response.ToString());
+            await networkStream.WriteAsync(responseBytes);
+        }
+
+        private async Task<string> ReadRequest(NetworkStream networkStream)
         {
             var bufferLingth = 1024;
             var buffer = new byte[bufferLingth];
+            var totalBayts = 0;
             var requestBuilder = new StringBuilder();
             do
             {
-                var bytesRead = networkStream.Read(buffer, 0, bufferLingth);
+                var bytesRead = await networkStream.ReadAsync(buffer, 0, bufferLingth);
+                totalBayts += bytesRead;
+                if(totalBayts > 10 * 1024)
+                {
+                    throw new InvalidDataException("Request is to lorge.");
+                }
                 requestBuilder.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
             }
             while (networkStream.DataAvailable);
