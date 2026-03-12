@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -88,22 +88,24 @@ namespace WebServer.Server
         {
             int bufferSize = 1024;
             byte[] dataBuffer = new byte[bufferSize];
-            int totalBytesRead = 0;
             var requestContent = new StringBuilder();
 
-            do
+            while (true)
             {
                 int currentBytes = await stream.ReadAsync(dataBuffer, 0, bufferSize);
-                totalBytesRead += currentBytes;
-
-                if (totalBytesRead > 10240)
-                {
-                    throw new InvalidDataException("Request is too large.");
-                }
+                if (currentBytes == 0) break;
 
                 requestContent.Append(Encoding.UTF8.GetString(dataBuffer, 0, currentBytes));
+
+                if (currentBytes < bufferSize || !stream.DataAvailable)
+                {
+                    // Basic check to see if we have the full headers
+                    if (requestContent.ToString().Contains("\r\n\r\n"))
+                    {
+                        break;
+                    }
+                }
             }
-            while (stream.DataAvailable);
 
             return requestContent.ToString();
         }

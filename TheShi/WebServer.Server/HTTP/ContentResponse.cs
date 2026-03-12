@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Text;
@@ -10,7 +10,7 @@ namespace WebServer.Server.HTTP
     public class ContentResponse : Response
     {
         public ContentResponse(string content, string contentType, 
-            Action<Request, Response> preRenderAction = null)
+            Action<Request, Response>? preRenderAction = null)
             : base(StatusCode.OK)
         {
             Guard.AgainstNull(content);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,11 +11,11 @@ namespace WebServer.Server.HTTP_Request
     {
         private static Dictionary<string, Session> Sessions = new();
         public Method Method { get; private set; }
-        public string Url { get; private set; }
-        public HeaderCollection Headers { get; private set; }
-        public CookieCollection Cookies { get; private set; }
-        public string Body { get; private set; }
-        public Session Session { get; private set; }
+        public string Url { get; private set; } = null!;
+        public HeaderCollection Headers { get; private set; } = null!;
+        public CookieCollection Cookies { get; private set; } = null!;
+        public string Body { get; private set; } = null!;
+        public Session Session { get; private set; } = null!;
         public IReadOnlyDictionary<string, string> FromData { get; private set; } = new Dictionary<string, string>();
 
         public static Request Parse(string request)
@@ -26,6 +26,10 @@ namespace WebServer.Server.HTTP_Request
             var method = ParseMethod(startLine[0]);
 
             var url = startLine[1];
+            if (url.Contains("?"))
+            {
+                url = url.Split("?")[0];
+            }
 
             var headers = ParseHeaders(lines.Skip(1));
 
@@ -70,7 +74,7 @@ namespace WebServer.Server.HTTP_Request
             }
             catch (Exception)
             {
-                throw new InvalidOperationException($"Method '{method}' is not supportrd");
+                throw new InvalidOperationException($"Method '{method}' is not supported");
             }
         }
         private static HeaderCollection ParseHeaders(IEnumerable<string> headerLines)
@@ -102,7 +106,7 @@ namespace WebServer.Server.HTTP_Request
             var formCollection = new Dictionary<string, string>();
 
             if (headers.Contains(Header.ContentType)
-                && headers[Header.ContentType] == ContentType.FormUrlEncodet )
+                && headers[Header.ContentType] == ContentType.FormUrlEncoded )
             {
                 var parsedForm = ParseFormData(body);
 

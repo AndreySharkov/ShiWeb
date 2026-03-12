@@ -1,4 +1,4 @@
-﻿using WebServer.Server.Common;
+using WebServer.Server.Common;
 
 namespace WebServer.Server.HTTP_Request
 {
@@ -8,7 +8,7 @@ namespace WebServer.Server.HTTP_Request
         public const string ContentLength = "Content-Length";
         public const string ContentDisposition = "Content-Disposition";
         public const string Cookie = "Cookie";
-        public const string Data = "Data";
+        public const string Date = "Date";
         public const string Location = "Location";
         public const string Server = "Server";
         public const string SetCookie = "Set-Cookie";

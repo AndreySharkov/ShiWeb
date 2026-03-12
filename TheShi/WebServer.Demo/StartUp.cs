@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Web;
 using WebServer.Server;
 using WebServer.Server.HTTP;
@@ -21,7 +21,15 @@ namespace WebServer.demo
             var webServer = new HttpServer(endpoints =>
             {
                 endpoints
-                    .MapGet("/", new TextResponse("Hello from the server!"))
+                    .MapGet("/", new TextResponse("Hello from the updated server!"))
+                    .MapGet("/Home/About", new HtmlResponse("<h1>About</h1><p>Use this area to provide additional information.</p>"))
+                    .MapGet("/Home/Numbers", new HtmlResponse("", ShowNumbersTo50))
+                    .MapGet("/Home/NumbersToN", new HtmlResponse("", ShowNumbersToN))
+                    .MapPost("/Home/NumbersToN", new HtmlResponse("", ShowNumbersToN))
+                    .MapGet("/Products/My-Products", new HtmlResponse("", ShowAllProducts))
+                    .MapGet("/Products/AllAsJson", new HtmlResponse("", ShowAllProductsAsJson))
+                    .MapGet("/Products/AllAsText", new TextResponse("", ShowAllProductsAsText))
+                    .MapGet("/Products/AllAsTextFile", new TextFileResponse("products.txt"))
                     .MapGet("/HTML", new HtmlResponse("<h1>HTML response</h1>"))
                     .MapGet("/Redirect", new RedirectResponse("https://softuni.org/"))
                     .MapGet("/TestNameAge", new HtmlResponse(Form.HTML))
@@ -33,10 +41,134 @@ namespace WebServer.demo
                     .MapGet("/Login", new HtmlResponse(LoginPage.LoginForm))
                     .MapPost("/Login", new HtmlResponse("", PerformLogin))
                     .MapGet("/Logout", new HtmlResponse("", PerformLogout))
-                    .MapGet("/UserProfile", new HtmlResponse("", ShowProfile));
+                    .MapGet("/UserProfile", new HtmlResponse("", ShowProfile))
+                    .MapGet("/Chat/Show", new HtmlResponse("", ShowChat))
+                    .MapPost("/Chat/Send", new RedirectResponse("/Chat/Show", SendChatMessage));
             });
 
             await webServer.Start();
+        }
+
+        private static readonly List<KeyValuePair<string, string>> ChatMessages = new();
+
+        private static void ShowChat(Request req, Response res)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<h3>Messages:</h3>");
+            if (ChatMessages.Any())
+            {
+                foreach (var message in ChatMessages)
+                {
+                    sb.Append($@"<div class='card .bg-light col-6'>
+                        <div class='card-body'>
+                            <blockquote class='blockquote mb-0'>
+                                <p>{message.Value}</p>
+                                <footer class='blockquote-footer'>{message.Key}</footer>
+                            </blockquote>
+                        </div>
+                    </div>");
+                }
+            }
+            else
+            {
+                sb.Append("<p>No messages yet!</p>");
+            }
+
+            sb.Append(@"<p></p>
+            <form action='/Chat/Send' method='post'>
+                <div class='form-group card-header row'>
+                    <div class='col-12'>
+                        <h5>Send a new message</h5>
+                    </div>
+                    <div class='col-8'>
+                        <label>Message: </label>
+                        <textarea name='Message' class='form-control' rows='3'></textarea>
+                    </div>
+                    <div class='col-4'>
+                        <label>Sender Name: </label>
+                        <input name='Sender' class='form-control'>
+                        <input class='btn btn-primary mt-2 float-lg-right' type='submit' value='Send' />
+                    </div>
+                </div>
+            </form>");
+            res.Body = sb.ToString();
+        }
+
+        private static void SendChatMessage(Request req, Response res)
+        {
+            if (req.FromData.ContainsKey("Sender") && req.FromData.ContainsKey("Message"))
+            {
+                var sender = req.FromData["Sender"];
+                var message = req.FromData["Message"];
+                ChatMessages.Add(new KeyValuePair<string, string>(sender, message));
+            }
+        }
+
+        private static void ShowNumbersTo50(Request req, Response res)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<h2>Nums 1 ... 50</h2><ul>");
+            for (int i = 1; i <= 50; i++)
+            {
+                sb.Append($"<li>{i}</li>");
+            }
+            sb.Append("</ul>");
+            res.Body = sb.ToString();
+        }
+
+        private static void ShowNumbersToN(Request req, Response res)
+        {
+            int count = 3;
+            if (req.FromData.ContainsKey("count"))
+            {
+                int.TryParse(req.FromData["count"], out count);
+            }
+
+            var sb = new StringBuilder();
+            sb.Append($"<h2>Nums 1 ... {count}</h2><ul>");
+            for (int i = 1; i <= count; i++)
+            {
+                sb.Append($"<li>{i}</li>");
+            }
+            sb.Append("</ul>");
+            sb.Append(@"<form method='POST'>
+                <input name='count' value='" + count + @"'>
+                <button type='submit'>Submit</button>
+            </form>");
+            res.Body = sb.ToString();
+        }
+
+        private static readonly dynamic[] Products = new[]
+        {
+            new { Id = 1, Name = "Laptop", Price = 1500.00 },
+            new { Id = 2, Name = "Mouse", Price = 25.50 },
+            new { Id = 3, Name = "Keyboard", Price = 50.00 }
+        };
+
+        private static void ShowAllProducts(Request req, Response res)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<h1>All Products</h1><ul>");
+            foreach (var p in Products)
+            {
+                sb.Append($"<li>N.{p.Id}: {p.Name} - {p.Price} lv.</li>");
+            }
+            sb.Append("</ul>");
+            res.Body = sb.ToString();
+        }
+
+        private static void ShowAllProductsAsJson(Request req, Response res)
+        {
+            var json = "[" + string.Join(",", Products.Select(p => $"{{\"Id\":{p.Id},\"Name\":\"{p.Name}\",\"Price\":{p.Price}}}")) + "]";
+            res.Body = json;
+            res.Headers.Add(Header.ContentType, "application/json");
+        }
+
+        private static void ShowAllProductsAsText(Request req, Response res)
+        {
+            var text = string.Join(Environment.NewLine, Products.Select(p => $"Product {p.Id}: {p.Name} - {p.Price} lv."));
+            res.Body = text;
+            File.WriteAllText("products.txt", text);
         }
 
         private static void ParseFormInput(Request req, Response res)
@@ -101,19 +233,21 @@ namespace WebServer.demo
         {
             req.Session.Clear();
 
-            bool isValidUser = req.FromData["Username"] == TargetUser;
-            bool isValidPass = req.FromData["Password"] == TargetPass;
+            if (req.FromData.ContainsKey("Username") && req.FromData.ContainsKey("Password"))
+            {
+                bool isValidUser = req.FromData["Username"] == TargetUser;
+                bool isValidPass = req.FromData["Password"] == TargetPass;
 
-            if (isValidUser && isValidPass)
-            {
-                req.Session[Session.SessionUserKey] = "MyUserId";
-                res.Cookies.Add(Session.SessionCookieName, req.Session.Id);
-                res.Body = "<h3>Logged successfully! </h3>";
+                if (isValidUser && isValidPass)
+                {
+                    req.Session[Session.SessionUserKey] = "MyUserId";
+                    res.Cookies.Add(Session.SessionCookieName, req.Session.Id);
+                    res.Body = "<h3>Logged successfully! </h3>";
+                    return;
+                }
             }
-            else
-            {
-                res.Body = LoginPage.LoginForm;
-            }
+            
+            res.Body = LoginPage.LoginForm;
         }
 
         private static void PerformLogout(Request req, Response res)

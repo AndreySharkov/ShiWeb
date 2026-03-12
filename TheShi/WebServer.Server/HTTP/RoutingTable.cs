@@ -1,4 +1,4 @@
-﻿using WebServer.Server.Common;
+using WebServer.Server.Common;
 using WebServer.Server.Contracts;
 using WebServer.Server.HTTP_Request;
 using WebServer.Server.Responses;
@@ -12,10 +12,10 @@ namespace WebServer.Server.HTTP
         {
             routes = new Dictionary<Method, Dictionary<string, Response>>
             {
-                [Method.Get] = new Dictionary<string, Response>(),
-                [Method.Post] = new Dictionary<string, Response>(),
-                [Method.Put] = new Dictionary<string, Response>(),
-                [Method.Delete] = new Dictionary<string, Response>()
+                [Method.Get] = new Dictionary<string, Response>(StringComparer.OrdinalIgnoreCase),
+                [Method.Post] = new Dictionary<string, Response>(StringComparer.OrdinalIgnoreCase),
+                [Method.Put] = new Dictionary<string, Response>(StringComparer.OrdinalIgnoreCase),
+                [Method.Delete] = new Dictionary<string, Response>(StringComparer.OrdinalIgnoreCase)
             };
         }
         //public RoutingTable()
@@ -71,6 +71,11 @@ namespace WebServer.Server.HTTP
         {
             var requestMethod = request.Method;
             var requestUrl = request.Url;
+
+            if (requestUrl.Length > 1 && requestUrl.EndsWith("/"))
+            {
+                requestUrl = requestUrl.Substring(0, requestUrl.Length - 1);
+            }
 
             if (!routes.ContainsKey(requestMethod)
                 || !routes[requestMethod].ContainsKey(requestUrl))
